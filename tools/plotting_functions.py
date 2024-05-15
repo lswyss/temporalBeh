@@ -1,4 +1,5 @@
 #04.24.23_Livia
+# in tools folder plotting_functions.py
 #stremling plotting so it is easier to make stylistic changes quickly
 
 import matplotlib.pyplot as plt
@@ -50,37 +51,3 @@ def gridplot_indiv_trials(axs, worm_data, stim_data, time_axis_minutes, num_worm
     if num_worms > 0 and max_trials > 0:
         axs[0][0].legend(loc='upper right')
 
-
-
-def plot_combined_heatmap(trial_averages, time_axis_minutes, title, x_min=None, x_max=None):
-    plt.figure(figsize=(10, 8))
-    cmap = plt.get_cmap('viridis')
-    im = plt.imshow(trial_averages[::-1], aspect='auto', cmap=cmap, interpolation='nearest', origin='lower')
-    plt.colorbar(im, label='Activity Level')
-
-    y_ticks = np.arange(len(trial_averages))
-    y_labels = [f"Trial {len(trial_averages) - i}" for i in range(len(trial_averages))]
-    plt.yticks(ticks=y_ticks, labels=y_labels)
-
-    # Determine the ticks for every 10 minutes
-    min_time = int(np.floor(time_axis_minutes[0] / 10) * 10)
-    max_time = int(np.ceil(time_axis_minutes[-1] / 10) * 10)
-    x_labels = list(range(min_time, max_time + 1, 10))
-
-    # Find the corresponding indices for each label in `time_axis_minutes`
-    x_ticks = [np.abs(time_axis_minutes - label).argmin() for label in x_labels]
-
-    plt.xticks(ticks=x_ticks, labels=x_labels)
-
-    plt.xlabel('Time (minutes)')
-    plt.ylabel('Trial number')
-    plt.title(title)
-
-    # Add a white dashed line at time zero
-    plt.axvline(x=(0 - time_axis_minutes[0]) / (time_axis_minutes[1] - time_axis_minutes[0]), color='white', linestyle='--', linewidth=1)
-
-    # Set x-axis limits if provided
-    if x_min is not None and x_max is not None:
-        plt.xlim(x_min, x_max)
-
-    plt.show()
