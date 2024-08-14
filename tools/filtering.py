@@ -2,9 +2,9 @@
 
 import logging
 
-def filter_experiments(test_result, genotype, duration, period_suffix, exclude_dates=None):
+def filter_experiments(test_result, genotype, duration, period_suffix, exclude_experiments=None):
     """
-    Filter experiments based on genotype, duration, period suffix, and exclusion dates,
+    Filter experiments based on genotype, duration, period suffix, and exclusion experiment names,
     and return and print the matching names.
 
     Args:
@@ -12,22 +12,30 @@ def filter_experiments(test_result, genotype, duration, period_suffix, exclude_d
         genotype (str): Genotype to filter by.
         duration (str): Duration to filter by.
         period_suffix (str): Period suffix to filter by.
-        exclude_dates (list, optional): List of date prefixes to exclude. Defaults to None.
+        exclude_experiments (list, optional): List of full experiment names to exclude. Defaults to None.
 
     Returns:
         list: A list of experiment names matching the provided criteria.
     """
-    # Construct the suffix pattern to look for in experiment names
-    target_suffix = f"{genotype}_{duration}_{period_suffix}Period"
+    # Construct the criteria strings to look for in experiment names
+    target_genotype = genotype
+    target_duration = duration
+    target_period_suffix = f"_{period_suffix}Period"
     
     # Initialize an empty list for storing filtered experiment names
     filtered_names = []
 
     # Loop through all experiment names in test_result and filter according to criteria
     for name in test_result.keys():
-        if name.endswith(target_suffix):
-            if exclude_dates is None or not any(name.startswith(date) for date in exclude_dates):
-                filtered_names.append(name)
+        # Skip the experiment if it is in the exclude_experiments list
+        if exclude_experiments is not None and name in exclude_experiments:
+            continue
+        
+        # Check if all criteria are present in the experiment name
+        if (target_genotype in name and
+            target_duration in name and
+            name.endswith(target_period_suffix)):
+            filtered_names.append(name)
 
     # Log and print results
     if filtered_names:

@@ -3,3 +3,4 @@ data/
 # Ignore Python compiled files
 *.pyc
 __pycache__/
+*/__pycache__

@@ -4,6 +4,7 @@
 Created on Wed Aug 11 10:36:55 2021
 
 @author: sam
+folder tools import bootstrapTest.py
 """
 
 import numpy as np
@@ -75,7 +76,7 @@ class bootstrapTest():
         plt.fill_between(bins[1:][lo:hi],np.zeros(hi-lo),y[lo:hi],
                           facecolor=c, alpha=.1)
 
-def bootstrap_traces(data, sample_size=None, statistic=np.mean,
+def bootstrap_traces_sam(data, sample_size=None, statistic=np.mean,
                      n_boot=1e3 ,conf_interval=95,):
     if sample_size is None:
         sample_size = data.shape[0]
@@ -86,6 +87,23 @@ def bootstrap_traces(data, sample_size=None, statistic=np.mean,
     bootstrap = np.array(bootstrap)
     return np.mean(bootstrap,axis=0), [np.percentile(bootstrap,(100-conf_interval)/2,axis=0),
                                     np.percentile(bootstrap,conf_interval+(100-conf_interval)/2,axis=0)]
+
+def bootstrap_traces(data, n_boot=1000, conf_interval=99):
+    """
+    Bootstrap data for generating confidence intervals.
+    """
+    sample_size = data.shape[0]
+    bootstrap = []
+    for _ in range(int(n_boot)):
+        sampled_indices = np.random.choice(range(sample_size), size=sample_size, replace=True)
+        sampled_data = data[sampled_indices, :]
+        bootstrap.append(np.mean(sampled_data, axis=0))
+    bootstrap = np.array(bootstrap)
+    mean = np.mean(bootstrap, axis=0)
+    lower_bound = np.percentile(bootstrap, (100 - conf_interval) / 2, axis=0)
+    upper_bound = np.percentile(bootstrap, 100 - (100 - conf_interval) / 2, axis=0)
+    return mean, lower_bound, upper_bound
+
 
 def timeDependentDifference(data,ref,n_boot=1e3,conf_interval=99):
     '''Returns whether data and ref are significantly deifferenct at each timepoint'''

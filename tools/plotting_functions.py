@@ -17,12 +17,16 @@ def plot_sin(ax, xp, y, rng, label, color='blue', zorder=-2, plot_stim=False, st
     ax.fill_between(xp, *rng, alpha=0.5, color=color, lw=0, edgecolor='None', zorder=zorder)
     
     if plot_stim:
-        ax.plot(xp, stim_data, c='lightgray', zorder=-10)
+        ax.plot(xp, stim_data, c='darkorange', zorder=-10)
     
     # Set labels and title with font properties directly applied
-    ax.set_xlabel('Time (min)', fontsize=10)
-    ax.set_ylabel('Response', fontsize=10)
+    ax.set_xlabel('Time (min)', fontsize=12)
+    ax.set_ylabel('Activity', fontsize=12)
     ax.legend(fontsize=7, frameon=False, loc='upper right')
+    
+    # Set y-axis limits
+    ax.set_ylim(0, 1.4)
+    ax.set_xlim(-2, 35)
 
     ax.grid(False)
 
