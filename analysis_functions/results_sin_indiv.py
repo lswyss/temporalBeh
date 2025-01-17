@@ -95,8 +95,8 @@ def prepare_aggregated_data_from_df(df, tau, test_result, max_trials_limit=None)
     
     return aggregated_data, sliced_tau, adjusted_stim_data, max_trials
 
-def plot_aggregated_trials(aggregated_data, sliced_tau, adjusted_stim_data, max_trials, n_boot=1000, conf_interval=95):
-    fig, axs = plt.subplots(max_trials, 1, figsize=(8, 2 * max_trials), sharex=True)
+def plot_aggregated_trials(aggregated_data, sliced_tau, adjusted_stim_data, max_trials, n_boot=1000, conf_interval=95, save_path=None):
+    fig, axs = plt.subplots(max_trials, 1, figsize=(15, 5 * max_trials), sharex=True)
     plt.subplots_adjust(hspace=0.05)
     
     for trial_index in range(max_trials):
@@ -110,9 +110,16 @@ def plot_aggregated_trials(aggregated_data, sliced_tau, adjusted_stim_data, max_
                 ax.plot(sliced_tau, adjusted_stim_data, color='darkorange', linestyle='--', label='Stimulus' if trial_index == 0 else "")
             ax.text(1.01, 0.9, f'Trial {trial_index + 1}', transform=ax.transAxes, verticalalignment='center', horizontalalignment='left', fontsize=9)
             ax.text(1.01, 0.1, f'N={trial_data.shape[0]}', transform=ax.transAxes, verticalalignment='center', horizontalalignment='left', fontsize=9)
-        ax.set_ylim(0, 3.5)
-        ax.set_yticks([0, 1, 2, 3])
+        ax.set_ylim(0, 1.8)
+        ax.set_yticks([0, 0.6, 1.2, 1.8])
+        ax.set_xlim(-2, 35)
     
     axs[-1].set_xlabel('Time (min)', fontsize=12)
     fig.text(0.04, 0.5, 'Activity', ha='center', va='center', rotation='vertical', fontsize=12)
+      
+        # Save the figure as an SVG if a save path is provided
+    if save_path is not None:
+        plt.savefig(save_path, format='svg')
+    
+    
     plt.show()

@@ -1,3 +1,6 @@
+#PCA_behavior in analysis_functions
+#Livia 
+
 import numpy as np
 
 from sklearn.decomposition import PCA
@@ -9,145 +12,148 @@ from analysis_functions.results_sin_indiv import load_and_filter_data, prepare_a
 from tools.preparing_data import *
 
 
+# Utility function to generate distinct colors
+def get_distinct_colors(n):
+    colors = plt.cm.tab20(np.linspace(0, 1, 20))
+    if n > 20:
+        additional_colors = plt.cm.tab20b(np.linspace(0, 1, (n - 20)))
+        colors = np.vstack((colors, additional_colors))
+    return colors
 
+# Combined function to plot PCA results for individual worms and clusters
+def plot_pca_combined(aggregated_data, tau, intervals, num_clusters=3, n_components=3, trial_number=0):
+    fig, axs = plt.subplots(2, len(intervals), figsize=(20, 12))
+    num_worms = aggregated_data[trial_number].shape[0]
+    worm_colors = get_distinct_colors(num_worms)  # Colors for individual worms
+    cluster_colors = get_distinct_colors(num_clusters)  # Colors for clusters
 
-# # Utility function to generate distinct colors
-# def get_distinct_colors(n):
-#     colors = plt.cm.tab20(np.linspace(0, 1, 20))
-#     if n > 20:
-#         additional_colors = plt.cm.tab20b(np.linspace(0, 1, (n - 20)))
-#         colors = np.vstack((colors, additional_colors))
-#     return colors
+    for i, (start, end) in enumerate(intervals):
+        # Select the time points within the given interval
+        time_indices = np.where((tau >= start) & (tau < end))[0]
+        if len(time_indices) == 0:
+            print(f"No data points found in interval {start}-{end} min")
+            continue
 
-# # Combined function to plot PCA results for individual worms and clusters
-# def plot_pca_combined(aggregated_data, tau, intervals, num_clusters=3, n_components=3, trial_number=0):
-#     fig, axs = plt.subplots(2, len(intervals), figsize=(20, 12))
-#     num_worms = aggregated_data[trial_number].shape[0]
-#     worm_colors = get_distinct_colors(num_worms)  # Colors for individual worms
-#     cluster_colors = get_distinct_colors(num_clusters)  # Colors for clusters
+        # Use the specified trial data
+        interval_data = aggregated_data[trial_number][:, time_indices]
 
-#     for i, (start, end) in enumerate(intervals):
-#         # Select the time points within the given interval
-#         time_indices = np.where((tau >= start) & (tau < end))[0]
-#         if len(time_indices) == 0:
-#             print(f"No data points found in interval {start}-{end} min")
-#             continue
+        # Flatten the data across selected time points for PCA
+        num_timepoints = interval_data.shape[1]
+        flattened_data = interval_data.reshape(num_worms, num_timepoints)
 
-#         # Use the specified trial data
-#         interval_data = aggregated_data[trial_number][:, time_indices]
+        if flattened_data.shape[1] == 0:
+            print(f"No features to process in interval {start}-{end} min")
+            continue
 
-#         # Flatten the data across selected time points for PCA
-#         num_timepoints = interval_data.shape[1]
-#         flattened_data = interval_data.reshape(num_worms, num_timepoints)
-
-#         if flattened_data.shape[1] == 0:
-#             print(f"No features to process in interval {start}-{end} min")
-#             continue
-
-#         # Apply PCA
-#         pca = PCA(n_components=n_components)
-#         pca_result = pca.fit_transform(flattened_data)
+        # Apply PCA
+        pca = PCA(n_components=n_components)
+        pca_result = pca.fit_transform(flattened_data)
         
-#         # Print explained variance
-#         explained_variance = pca.explained_variance_ratio_
-#         print(f"Explained variance for interval {start}-{end}: {explained_variance}")
+        # Print explained variance
+        explained_variance = pca.explained_variance_ratio_
+        print(f"Explained variance for interval {start}-{end}: {explained_variance}")
 
-#         # Plot the PCA results for individual worms (first two components)
-#         ax_indiv = axs[0, i]
-#         for worm_idx in range(num_worms):
-#             ax_indiv.scatter(pca_result[worm_idx, 0], pca_result[worm_idx, 1], color=worm_colors[worm_idx])
+        # Plot the PCA results for individual worms (first two components)
+        ax_indiv = axs[0, i]
+        for worm_idx in range(num_worms):
+            ax_indiv.scatter(pca_result[worm_idx, 0], pca_result[worm_idx, 1], color=worm_colors[worm_idx])
         
-#         ax_indiv.set_title(f'PCA (Individual Worms): {start}-{end} min')
-#         ax_indiv.set_xlabel('Principal Component 1')
-#         ax_indiv.set_ylabel('Principal Component 2')
-#         ax_indiv.grid(True)
+        ax_indiv.set_title(f'PCA (Individual Worms): {start}-{end} min')
+        ax_indiv.set_xlabel('Principal Component 1')
+        ax_indiv.set_ylabel('Principal Component 2')
+        ax_indiv.grid(False)
 
-#         # Apply K-means clustering
-#         kmeans = KMeans(n_clusters=num_clusters)
-#         clusters = kmeans.fit_predict(pca_result)
+        # Apply K-means clustering
+        kmeans = KMeans(n_clusters=num_clusters)
+        clusters = kmeans.fit_predict(pca_result)
 
-#         # Plot the PCA results with clusters (first two components)
-#         ax_cluster = axs[1, i]
-#         for cluster_idx in range(num_clusters):
-#             cluster_points = pca_result[clusters == cluster_idx]
-#             ax_cluster.scatter(cluster_points[:, 0], cluster_points[:, 1], color=cluster_colors[cluster_idx])
+        # Plot the PCA results with clusters (first two components)
+        ax_cluster = axs[1, i]
+        for cluster_idx in range(num_clusters):
+            cluster_points = pca_result[clusters == cluster_idx]
+            ax_cluster.scatter(cluster_points[:, 0], cluster_points[:, 1], color=cluster_colors[cluster_idx])
         
-#         ax_cluster.set_title(f'PCA (Clusters): {start}-{end} min')
-#         ax_cluster.set_xlabel('Principal Component 1')
-#         ax_cluster.set_ylabel('Principal Component 2')
-#         ax_cluster.grid(True)
+        ax_cluster.set_title(f'PCA (Clusters): {start}-{end} min')
+        ax_cluster.set_xlabel('Principal Component 1')
+        ax_cluster.set_ylabel('Principal Component 2')
+        ax_cluster.grid(False)
 
-#     plt.tight_layout()
-#     plt.show()
+    plt.tight_layout()
+    plt.show()
 
+    # Function to plot PCA results for all trials of individual worms
+def plot_pca_all_trials_with_clusters(aggregated_data, tau, intervals, num_worms_to_plot=10, num_clusters=3,save_path=None):
+    fig, axs = plt.subplots(2, len(intervals), figsize=(20,12))
+    worm_colors = get_distinct_colors(num_worms_to_plot)  # Colors for individual worms
+    cluster_colors = get_distinct_colors(num_clusters)  # Colors for clusters
 
-#     # Function to plot PCA results for all trials of individual worms
-# def plot_pca_all_trials_with_clusters(aggregated_data, tau, intervals, num_worms_to_plot=10, num_clusters=3):
-#     fig, axs = plt.subplots(2, len(intervals), figsize=(20, 12))
-#     worm_colors = get_distinct_colors(num_worms_to_plot)  # Colors for individual worms
-#     cluster_colors = get_distinct_colors(num_clusters)  # Colors for clusters
+    for i, (start, end) in enumerate(intervals):
+        # Select the time points within the given interval
+        time_indices = np.where((tau >= start) & (tau < end))[0]
+        #print(f"Time indices for interval {start}-{end}:", time_indices)
+        if len(time_indices) == 0:
+            print(f"No data points found in interval {start}-{end} min")
+            continue
 
-#     for i, (start, end) in enumerate(intervals):
-#         # Select the time points within the given interval
-#         time_indices = np.where((tau >= start) & (tau < end))[0]
-#         #print(f"Time indices for interval {start}-{end}:", time_indices)
-#         if len(time_indices) == 0:
-#             print(f"No data points found in interval {start}-{end} min")
-#             continue
+        # Collect data for all trials of the specified worms
+        combined_data = []
+        worm_labels = []
 
-#         # Collect data for all trials of the specified worms
-#         combined_data = []
-#         worm_labels = []
+        for worm_idx in range(num_worms_to_plot):
+            worm_trials = []
+            for trial_idx in range(len(aggregated_data)):
+                worm_trials.append(aggregated_data[trial_idx][worm_idx, time_indices])
+            worm_trials = np.vstack(worm_trials)
+            combined_data.append(worm_trials)
+            worm_labels.extend([worm_idx] * worm_trials.shape[0])
 
-#         for worm_idx in range(num_worms_to_plot):
-#             worm_trials = []
-#             for trial_idx in range(len(aggregated_data)):
-#                 worm_trials.append(aggregated_data[trial_idx][worm_idx, time_indices])
-#             worm_trials = np.vstack(worm_trials)
-#             combined_data.append(worm_trials)
-#             worm_labels.extend([worm_idx] * worm_trials.shape[0])
+        combined_data = np.vstack(combined_data)
+        worm_labels = np.array(worm_labels)
 
-#         combined_data = np.vstack(combined_data)
-#         worm_labels = np.array(worm_labels)
-
-#         # Apply PCA
-#         pca = PCA(n_components=2)
-#         pca_result = pca.fit_transform(combined_data)
+        # Apply PCA
+        pca = PCA(n_components=2)
+        pca_result = pca.fit_transform(combined_data)
         
-#         # Print explained variance
-#         explained_variance = pca.explained_variance_ratio_
-#         print(f"Explained variance for interval {start}-{end}: {explained_variance}")
+        # Print explained variance
+        explained_variance = pca.explained_variance_ratio_
+        print(f"Explained variance for interval {start}-{end}: {explained_variance}")
 
-#         # Plot the PCA results for all trials of individual worms
-#         ax_indiv = axs[0, i]
-#         for worm_idx in range(num_worms_to_plot):
-#             worm_points = pca_result[worm_labels == worm_idx]
-#             ax_indiv.scatter(worm_points[:, 0], worm_points[:, 1], color=worm_colors[worm_idx], label=f'Worm {worm_idx+1}' if i == 0 else "")
+        # Plot the PCA results for all trials of individual worms
+        ax_indiv = axs[0, i]
+        for worm_idx in range(num_worms_to_plot):
+            worm_points = pca_result[worm_labels == worm_idx]
+            ax_indiv.scatter(worm_points[:, 0], worm_points[:, 1], color=worm_colors[worm_idx], label=f'Worm {worm_idx+1}' if i == 0 else "")
         
-#         ax_indiv.set_title(f'PCA (All Trials): {start}-{end} min')
-#         ax_indiv.set_xlabel('Principal Component 1')
-#         ax_indiv.set_ylabel('Principal Component 2')
-#         ax_indiv.grid(True)
-#         if i == 0:
-#             ax_indiv.legend()
+        ax_indiv.set_title(f'PCA (All Trials): {start}-{end} min')
+        ax_indiv.set_xlabel('Principal Component 1')
+        ax_indiv.set_ylabel('Principal Component 2')
+        ax_indiv.set_ylim(-30,45)
 
-#         # Apply K-means clustering
-#         kmeans = KMeans(n_clusters=num_clusters)
-#         clusters = kmeans.fit_predict(pca_result)
+        if i == 0:
+            ax_indiv.legend()
 
-#         # Plot the PCA results with clusters
-#         ax_cluster = axs[1, i]
-#         for cluster_idx in range(num_clusters):
-#             cluster_points = pca_result[clusters == cluster_idx]
-#             ax_cluster.scatter(cluster_points[:, 0], cluster_points[:, 1], color=cluster_colors[cluster_idx])
+        # Apply K-means clustering
+        kmeans = KMeans(n_clusters=num_clusters)
+        clusters = kmeans.fit_predict(pca_result)
+
+        # Plot the PCA results with clusters
+        ax_cluster = axs[1, i]
+        for cluster_idx in range(num_clusters):
+            cluster_points = pca_result[clusters == cluster_idx]
+            ax_cluster.scatter(cluster_points[:, 0], cluster_points[:, 1], color=cluster_colors[cluster_idx])
         
-#         ax_cluster.set_title(f'PCA (Clusters): {start}-{end} min')
-#         ax_cluster.set_xlabel('Principal Component 1')
-#         ax_cluster.set_ylabel('Principal Component 2')
-#         ax_cluster.grid(True)
+        ax_cluster.set_title(f'PCA (Clusters): {start}-{end} min')
+        ax_cluster.set_xlabel('Principal Component 1')
+        ax_cluster.set_ylabel('Principal Component 2')
 
-#     plt.tight_layout()
-#     plt.show()
+        ax_cluster.set_ylim(-30,45)
+
+    plt.tight_layout()
+        # Save the plot if a path is provided
+    if save_path:
+        plt.savefig(save_path, format='svg')
+
+    plt.show()
 
 #Livia in folder analysis_functions called PCA_behavior.py
 import numpy as np
@@ -175,7 +181,7 @@ def flatten_trial_data(df, trial_number):
             })
     return pd.DataFrame(data_records)
 
-def plot_pca_trials(df, trial_number, title_suffix=''):
+def plot_pca_trials(df, trial_number, title_suffix='',save_path=None):
     fig, axs = plt.subplots(2, 3, figsize=(18, 12))
     fig.subplots_adjust(hspace=0.3, wspace=0.3)
     axs = axs.flatten()
@@ -240,4 +246,8 @@ def plot_pca_trials(df, trial_number, title_suffix=''):
     fig.add_artist(legend_experiments)  # Add the experiments legend to the plot
 
     plt.tight_layout(rect=[0, 0, 0.85, 1])  # Adjust the plot to make space for the legends
+    
+    if save_path:
+        plt.savefig(save_path, format='svg')
+
     plt.show()

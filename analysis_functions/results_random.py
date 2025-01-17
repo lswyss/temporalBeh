@@ -64,7 +64,7 @@ def generate_stimulus(tau, stim_list):
 
     return new_stim
 
-def response_random_sin(filtered_experiments, original_data_filepath, n_boot=1000, statistic=np.mean, conf_interval=95, t_samp=(-2, 35), stim_list=None):
+# def response_random_sin(filtered_experiments, original_data_filepath, n_boot=1000, statistic=np.mean, conf_interval=95, t_samp=(-2, 35), stim_list=None):
     """
     Process and plot random sine data from filtered experiments.
     """
@@ -79,6 +79,11 @@ def response_random_sin(filtered_experiments, original_data_filepath, n_boot=100
 
     # Concatenate data from filtered experiments
     concatenated_data = np.concatenate([exp['data'] for exp in filtered_experiments.values()], axis=0)
+    
+    # Print the number of worms and trials
+    num_worms = len(filtered_experiments)  # Number of unique experiments (worms)
+    num_trials = concatenated_data.shape[0]  # Number of total trials (rows in concatenated data)
+    print(f"Number of worms: {num_worms}, Total trials: {num_trials}")
 
     # Perform bootstrapping on the concatenated data
     y, rng = bootstrap_traces_sam(concatenated_data[:, ind_t], n_boot=n_boot, statistic=statistic, conf_interval=conf_interval)
@@ -106,7 +111,7 @@ def response_random_sin(filtered_experiments, original_data_filepath, n_boot=100
     ax.legend(fontsize=7, frameon=False, loc='upper right')
     
     # Set y-axis limits
-    ax.set_ylim(0, 1.8)
+    ax.set_ylim(0, 1.4)
     ax.set_xlim(-2, 35)
 
     ax.grid(False)
@@ -114,3 +119,57 @@ def response_random_sin(filtered_experiments, original_data_filepath, n_boot=100
     plt.show()
     return fig, ax
 
+def response_random_sin(filtered_experiments, original_data_filepath, n_boot=1000, statistic=np.mean, conf_interval=95, t_samp=(-2, 35), stim_list=None):
+    """
+    Process and plot random sine data from filtered experiments.
+    """
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(15, 5))
+
+    # Load the original data to get the tau time points
+    with open(original_data_filepath, 'rb') as f:
+        original_data = pickle.load(f)
+    
+    tau = original_data['tau']
+    ind_t = np.where((tau >= t_samp[0]) & (tau <= t_samp[1]))[0]
+
+    # Concatenate data from filtered experiments
+    concatenated_data = np.concatenate([exp['data'] for exp in filtered_experiments.values()], axis=0)
+    
+    # Print the number of worms and trials
+    num_worms = len(filtered_experiments)  # Number of unique experiments (worms)
+    num_trials = concatenated_data.shape[0]  # Number of total trials (rows in concatenated data)
+    print(f"Number of worms: {num_worms}, Total trials: {num_trials}")
+
+    # Perform bootstrapping on the concatenated data
+    y, rng = bootstrap_traces_sam(concatenated_data[:, ind_t], n_boot=n_boot, statistic=statistic, conf_interval=conf_interval)
+
+    # Generate or extract stimulus data
+    if stim_list is not None:
+        stim_data = generate_stimulus(tau, stim_list)[ind_t]
+    else:
+        stim_data = original_data[next(iter(filtered_experiments))]['stim'][ind_t]
+
+    # Plotting function
+    plt.rcParams.update({'font.family': 'DejaVu Sans', 'font.size': 7, 'svg.fonttype': 'none'})
+    
+    ax.plot(tau[ind_t], y, lw=2, color='cornflowerblue', label='Random Sine Data', zorder=-2)
+    
+    # Filling between ranges with confidence interval
+    ax.fill_between(tau[ind_t], *rng, alpha=0.5, color='cornflowerblue', lw=0, edgecolor='None', zorder=-2)
+    
+    if stim_data is not None:
+        ax.plot(tau[ind_t], stim_data, c='darkorange', zorder=-10)
+    
+    # Set labels and title with font properties directly applied
+    ax.set_xlabel('Time (min)', fontsize=12)
+    ax.set_ylabel('Activity', fontsize=12)
+    ax.legend(fontsize=7, frameon=False, loc='upper right')
+    
+    # Set y-axis limits
+    ax.set_ylim(0, 1.4)
+    ax.set_xlim(-2, 35)
+
+    ax.grid(False)
+
+    plt.show()
+    return fig, ax

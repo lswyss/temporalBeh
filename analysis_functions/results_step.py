@@ -59,4 +59,5 @@ def plot_step(ax, x, y, rng, label, color='cornflowerblue', plot_stim=False, sti
         ax.plot(x, stim_data, color='darkorange', label='Stimulus')
     ax.legend()
      # Set y-axis limits
-    ax.set_ylim(0, 1.5)
+    ax.set_ylim(0, 1.6)
+    ax.set_xlim(-2, 40)
